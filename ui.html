@@ -1,0 +1,112 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 10px;
+      }
+      .color-picker {
+        width: 300px;
+        margin-bottom: 20px;
+      }
+      .slider-container {
+        margin: 10px 0;
+        height: 24px;
+      }
+      label {
+        display: inline-block;
+        width: 80px;
+      }
+      input[type="range"] {
+        width: 150px;
+        vertical-align: middle;
+      }
+      span {
+        display: inline-block;
+        width: 40px;
+        margin-left: 10px;
+      }
+      .preview {
+        width: 100%;
+        height: 50px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+      }
+      button {
+        display: block;
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="color-picker">
+      <div class="preview" id="colorPreview"></div>
+      <div class="slider-container">
+        <label>Hue</label>
+        <input type="range" id="hue" min="0" max="360" value="0">
+        <span id="hueValue">0</span>
+      </div>
+      <div class="slider-container">
+        <label>Saturation</label>
+        <input type="range" id="saturation" min="0" max="100" value="50">
+        <span id="saturationValue">50%</span>
+      </div>
+      <div class="slider-container">
+        <label>Lightness</label>
+        <input type="range" id="lightness" min="0" max="100" value="50">
+        <span id="lightnessValue">50%</span>
+      </div>
+    </div>
+    <button id="apply">Apply Color</button>
+    <button id="cancel">Cancel</button>
+
+    <script>
+      let h = 0, s = 50, l = 50;
+      
+      function updatePreview() {
+        const previewColor = `hsl(${h}, ${s}%, ${l}%)`;
+        document.getElementById('colorPreview').style.backgroundColor = previewColor;
+        
+        // Update the saturation and lightness slider gradients
+        const pureHue = `hsl(${h}, 100%, 50%)`;
+        document.documentElement.style.setProperty('--hue-color', pureHue);
+      }
+
+      document.getElementById('hue').oninput = (e) => {
+        h = parseInt(e.target.value);
+        document.getElementById('hueValue').textContent = h;
+        updatePreview();
+      };
+
+      document.getElementById('saturation').oninput = (e) => {
+        s = parseInt(e.target.value);
+        document.getElementById('saturationValue').textContent = s + '%';
+        updatePreview();
+      };
+
+      document.getElementById('lightness').oninput = (e) => {
+        l = parseInt(e.target.value);
+        document.getElementById('lightnessValue').textContent = l + '%';
+        updatePreview();
+      };
+
+      document.getElementById('apply').onclick = () => {
+        parent.postMessage({ 
+          pluginMessage: { 
+            type: 'apply-color',
+            color: { h, s, l }
+          }
+        }, '*');
+      };
+
+      document.getElementById('cancel').onclick = () => {
+        parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+      };
+
+      // Initialize the preview and gradients
+      updatePreview();
+    </script>
+  </body>
+</html>

@@ -1,2 +1,1 @@
-# figma-color-manager
-Color management plugin for Figma
+# Figma color manager
