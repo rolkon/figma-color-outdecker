@@ -122,31 +122,39 @@ async function createOrUpdateColorVariable(
 figma.showUI(__html__);
 
 // Set initial window size
-figma.ui.resize(640, 480); // Width: 320px, Height: 400px
+figma.ui.resize(640, 600); // Width: 320px, Height: 400px
 
 // Calls to "parent.postMessage" from within the HTML page will trigger this
 // callback. The callback will be passed the "pluginMessage" property of the
 // posted message.
-figma.ui.onmessage = async (msg: {type: string, color?: {r: number, g: number, b: number, a: number}}) => {
-  if (msg.type === 'apply-color' && msg.color) {
-    const palette = generateColorPalette(msg.color);
+figma.ui.onmessage = async (msg: {type: string, colors?: {r: number, g: number, b: number, a: number}[] }) => {
+  if (msg.type === 'apply-colors' && msg.colors) {
+    const palettes = msg.colors.map(generateColorPalette);
+
+    console.log(palettes);
 
     try {
       const collection = await ensureVariableCollectionExists("Outdecker Primitives");
 
-      console.log(collection);
+      const colorTypes = ["Primary", "Secondary"];
 
-      const color_types = ["Primary"];
+      const tailwindLabels = ["50", "100", "200", "300",
+                              "400", "500", "600", "700",
+                              "800", "900", "950"];
 
-      const tailwindLabels = ["Primary/50", "Primary/100", "Primary/200", "Primary/300",
-                              "Primary/400", "Primary/500", "Primary/600", "Primary/700",
-                              "Primary/800", "Primary/900", "Primary/950"];
+      
+      colorTypes.forEach((type, index) => {
+        
+      });
 
-      for (const [index, colorHex] of palette.entries()) {
-        const colorRgb = hexToRgb(colorHex); // Convert hex to RGB
-        console.log(index, colorHex, colorRgb);
-        if (colorRgb) {
-          await createOrUpdateColorVariable(collection, tailwindLabels[index], colorRgb); // Use await in an async context
+      for (const [typeIdx, type] of colorTypes.entries()) {
+        for (const [colorIdx, colorHex] of palettes[typeIdx].entries()) {
+          const colorRgb = hexToRgb(colorHex); // Convert hex to RGB
+          if (colorRgb) {
+            const label = [type, "/", tailwindLabels[colorIdx]].join("");
+            console.log(label);
+            await createOrUpdateColorVariable(collection, label, colorRgb); // Use await in an async context
+          }
         }
       }
 
@@ -159,7 +167,7 @@ figma.ui.onmessage = async (msg: {type: string, color?: {r: number, g: number, b
       }
     }
 
-    figma.ui.postMessage({type: 'update-palette', palette});
+    figma.ui.postMessage({type: 'update-palettes', palettes});
   } else {
     figma.closePlugin();
   }

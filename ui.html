@@ -30,33 +30,40 @@
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
   </head>
   <body>
-    <div class="palette" id="colorPalette"></div>
-    <div class="color-picker" id="colorPicker"></div>
+    <div class="palette" id="colorPalette1"></div>
+    <div class="color-picker" id="colorPicker1"></div>
+
+    <div class="palette" id="colorPalette2"></div>
+    <div class="color-picker" id="colorPicker2"></div>
 
     <script>
-      const pickr = Pickr.create({
-        el: '#colorPicker',
-        theme: 'classic', // or 'monolith', 'nano'
-        default: 'hsl(0, 50%, 50%)',
-        components: {
-          preview: true,
-          opacity: true,
-          hue: true,
-          interaction: {
-            input: true,
-            save: true
+      function createPickr(id) {
+        return Pickr.create({
+          el: `#${id}`,
+          theme: 'classic', // or 'monolith', 'nano'
+          default: 'hsl(0, 50%, 50%)',
+          components: {
+            preview: true,
+            opacity: true,
+            hue: true,
+            interaction: {
+              input: true,
+              save: true
+            }
           }
-        }
-      });
+        });
+      }
+
+      const pickr1 = createPickr('colorPicker1');
+      const pickr2 = createPickr('colorPicker2');
 
       // Function to update color palette
-      function updatePalette(palette) {
-        const paletteContainer = document.getElementById('colorPalette');
+      function updatePalette(palette, paletteId) {
+        const paletteContainer = document.getElementById(paletteId);
         paletteContainer.innerHTML = '';
 
         const tailwindLabels = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
 
-        //palette contains the input color as the 12th element, so for rendering the palette we don't consider it
         palette.forEach((colorHex, index) => {
           const container = document.createElement('div');
           container.style.display = 'flex';
@@ -84,20 +91,35 @@
         });
       }
 
-        // Initialize the palette with a default palette
+      // Initialize the palettes with default palettes
       const defaultPalette = Array(11).fill('#cccccc'); // Placeholder colors
-      updatePalette(defaultPalette);
+      updatePalette(defaultPalette, 'colorPalette1');
+      updatePalette(defaultPalette, 'colorPalette2');
 
-      pickr.on('change', (color) => {
+      function sendColors() {
+        parent.postMessage({ pluginMessage: { type: 'apply-colors', colors: [color1, color2] } }, '*');
+      }
+
+      let color1 = { r: 204, g: 204, b: 204, a: 1 }; // Default color for palette 1
+      let color2 = { r: 204, g: 204, b: 204, a: 1 }; // Default color for palette 2
+
+      pickr1.on('change', (color) => {
         const rgbaArr = color.toRGBA();
-        const rgba = { r: rgbaArr[0], g: rgbaArr[1], b: rgbaArr[2], a: rgbaArr[3] };
-        parent.postMessage({ pluginMessage: { type: 'apply-color', color: rgba } }, '*');
+        color1 = { r: rgbaArr[0], g: rgbaArr[1], b: rgbaArr[2], a: rgbaArr[3] };
+        sendColors();
+      });
+
+      pickr2.on('change', (color) => {
+        const rgbaArr = color.toRGBA();
+        color2 = { r: rgbaArr[0], g: rgbaArr[1], b: rgbaArr[2], a: rgbaArr[3] };
+        sendColors();
       });
 
       window.addEventListener('message', (event) => {
         const pluginMessage = event.data.pluginMessage;
-        if (pluginMessage.type === 'update-palette') {
-          updatePalette(pluginMessage.palette);
+        if (pluginMessage.type === 'update-palettes') {
+          updatePalette(pluginMessage.palettes[0], 'colorPalette1');
+          updatePalette(pluginMessage.palettes[1], 'colorPalette2');
         }
       });
     </script>
