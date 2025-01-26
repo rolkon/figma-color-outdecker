@@ -9,93 +9,41 @@
         width: 300px;
         margin-bottom: 20px;
       }
-      .slider-container {
-        margin: 10px 0;
-        height: 24px;
-      }
-      label {
-        display: inline-block;
-        width: 80px;
-      }
-      input[type="range"] {
-        width: 150px;
-        vertical-align: middle;
-      }
-      span {
-        display: inline-block;
-        width: 40px;
-        margin-left: 10px;
-      }
       .preview {
         width: 100%;
         height: 50px;
         border: 1px solid #ccc;
         margin-bottom: 20px;
       }
-      button {
-        display: block;
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 8px;
-      }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
   </head>
   <body>
-    <div class="color-picker">
-      <div class="preview" id="colorPreview"></div>
-      <div class="slider-container">
-        <label>Hue</label>
-        <input type="range" id="hue" min="0" max="360" value="0">
-        <span id="hueValue">0</span>
-      </div>
-      <div class="slider-container">
-        <label>Saturation</label>
-        <input type="range" id="saturation" min="0" max="100" value="50">
-        <span id="saturationValue">50%</span>
-      </div>
-      <div class="slider-container">
-        <label>Lightness</label>
-        <input type="range" id="lightness" min="0" max="100" value="50">
-        <span id="lightnessValue">50%</span>
-      </div>
-    </div>
+    <div class="color-picker" id="colorPicker"></div>
+    <!-- <div class="preview" id="colorPreview"></div> -->
 
     <script>
-      let h = 0, s = 50, l = 50;
-
-      function updatePreview() {
-        const previewColor = `hsl(${h}, ${s}%, ${l}%)`;
-        document.getElementById('colorPreview').style.backgroundColor = previewColor;
-
-        // Send the updated color to the plugin
-        parent.postMessage({
-          pluginMessage: {
-            type: 'apply-color',
-            color: { h, s, l }
+      const pickr = Pickr.create({
+        el: '#colorPicker',
+        theme: 'classic', // or 'monolith', 'nano'
+        default: 'hsl(0, 50%, 50%)',
+        components: {
+          preview: true,
+          opacity: true,
+          hue: true,
+          interaction: {
+            input: true,
+            save: true
           }
-        }, '*');
-      }
+        }
+      });
 
-      document.getElementById('hue').oninput = (e) => {
-        h = parseInt(e.target.value);
-        document.getElementById('hueValue').textContent = h;
-        updatePreview();
-      };
-
-      document.getElementById('saturation').oninput = (e) => {
-        s = parseInt(e.target.value);
-        document.getElementById('saturationValue').textContent = s + '%';
-        updatePreview();
-      };
-
-      document.getElementById('lightness').oninput = (e) => {
-        l = parseInt(e.target.value);
-        document.getElementById('lightnessValue').textContent = l + '%';
-        updatePreview();
-      };
-
-      // Initialize the preview and gradients
-      updatePreview();
+      pickr.on('change', (color) => {
+        const rgba_arr = color.toRGBA(); // Get color as Hex
+        const rgba = {r: rgba_arr[0], g: rgba_arr[1], b: rgba_arr[2], a: rgba_arr[3]}
+        parent.postMessage({ pluginMessage: { type: 'apply-color', color: rgba } }, '*');
+      });
     </script>
   </body>
 </html>
