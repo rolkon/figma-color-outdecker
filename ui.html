@@ -56,6 +56,7 @@
 
         const tailwindLabels = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
 
+        //palette contains the input color as the 12th element, so for rendering the palette we don't consider it
         palette.forEach((colorHex, index) => {
           const container = document.createElement('div');
           container.style.display = 'flex';

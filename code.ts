@@ -57,6 +57,17 @@ function rgbToHex(r: number, g: number, b: number): string {
   }).join('');
 }
 
+// Function to convert Hex to RGB
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const bigint = parseInt(hex.replace("#", ""), 16);
+  if (isNaN(bigint)) return null;
+  return {
+    r: ((bigint >> 16) & 255) / 255,
+    g: ((bigint >> 8) & 255) / 255,
+    b: (bigint & 255) / 255,
+  };
+}
+
 // Function to generate Tailwind CSS color palette
 function generateColorPalette(baseColor: { r: number; g: number; b: number; a: number }): string[] {
   const { r, g, b } = baseColor;
@@ -66,9 +77,46 @@ function generateColorPalette(baseColor: { r: number; g: number; b: number; a: n
     const rgb = hslToRgb(hsl.h, hsl.s, l);
     return rgbToHex(rgb.r, rgb.g, rgb.b);
   });
+
+  // Append the input color as the last element
+  const inputColorHex = rgbToHex(r, g, b);
+  // palette.push(inputColorHex);
+
   return palette;
 }
 
+async function ensureVariableCollectionExists(name: string): Promise<VariableCollection> {
+  if (!figma.variables) {
+    throw new Error("Variables API not supported in this file.");
+  }
+
+  const collections = await figma.variables.getLocalVariableCollectionsAsync();
+  let collection = collections.find(c => c.name === name);
+  if (!collection) {
+    collection = figma.variables.createVariableCollection(name);
+  }
+
+  return collection;
+}
+
+async function createOrUpdateColorVariable(
+  collection: VariableCollection,
+  name: string,
+  color: { r: number; g: number; b: number }
+) {
+  const variables = await figma.variables.getLocalVariablesAsync();
+
+  let variable = variables.find(v => v.name === name && v.variableCollectionId === collection.id);
+
+  if (!variable) {
+    console.log(name, collection.id);
+    variable = figma.variables.createVariable(name, collection, "COLOR");
+  }
+
+  const mode_id = Object.keys(variable.valuesByMode)[0];
+
+  variable.setValueForMode(mode_id, color);
+} 
 
 // This shows the HTML page in "ui.html".
 figma.showUI(__html__);
@@ -81,31 +129,37 @@ figma.ui.resize(640, 480); // Width: 320px, Height: 400px
 // posted message.
 figma.ui.onmessage = async (msg: {type: string, color?: {r: number, g: number, b: number, a: number}}) => {
   if (msg.type === 'apply-color' && msg.color) {
-
     const palette = generateColorPalette(msg.color);
 
-    // console.log(palette);
+    try {
+      const collection = await ensureVariableCollectionExists("Outdecker Primitives");
+
+      console.log(collection);
+
+      const color_types = ["Primary"];
+
+      const tailwindLabels = ["Primary/50", "Primary/100", "Primary/200", "Primary/300",
+                              "Primary/400", "Primary/500", "Primary/600", "Primary/700",
+                              "Primary/800", "Primary/900", "Primary/950"];
+
+      for (const [index, colorHex] of palette.entries()) {
+        const colorRgb = hexToRgb(colorHex); // Convert hex to RGB
+        console.log(index, colorHex, colorRgb);
+        if (colorRgb) {
+          await createOrUpdateColorVariable(collection, tailwindLabels[index], colorRgb); // Use await in an async context
+        }
+      }
+
+      figma.notify("Color palette applied to variables.");
+    } catch (error: unknown) {
+      if(error instanceof Error) {
+        figma.notify("Error managing color variables: " + error.message);
+      } else {
+        figma.notify("An unknown error occured.");
+      }
+    }
 
     figma.ui.postMessage({type: 'update-palette', palette});
-
-    // Convert HSL to RGB (Figma uses RGB)
-    // const r = msg.color.r / 255;
-    // const g = msg.color.g / 255;
-    // const b = msg.color.b / 255;
-    // const a = msg.color.a;
-
-    // const rgbcolor = {r: r, g: g, b: b};
-    
-    // Apply color to selected nodes
-    // const nodes = figma.currentPage.selection;
-    // for (const node of nodes) {
-    //   if ('fills' in node) {
-    //     node.fills = [{
-    //       type: 'SOLID',
-    //       color: rgbcolor,
-    //     }];
-    //   }
-    // }
   } else {
     figma.closePlugin();
   }
