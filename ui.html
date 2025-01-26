@@ -53,12 +53,33 @@
       function updatePalette(palette) {
         const paletteContainer = document.getElementById('colorPalette');
         paletteContainer.innerHTML = '';
-        palette.forEach((colorHex) => {
+
+        const tailwindLabels = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
+
+        palette.forEach((colorHex, index) => {
+          const container = document.createElement('div');
+          container.style.display = 'flex';
+          container.style.flexDirection = 'column';
+          container.style.alignItems = 'center';
+          container.style.justifyContent = 'center';
+
           const square = document.createElement('div');
           square.className = 'color-square';
           square.style.backgroundColor = colorHex;
-          square.innerHTML = `<span>${colorHex}</span>`;
-          paletteContainer.appendChild(square);
+
+          const label = document.createElement('div');
+          label.className = 'label';
+          label.textContent = tailwindLabels[index] || '';
+
+          const hexValue = document.createElement('div');
+          hexValue.className = 'hex-value';
+          hexValue.textContent = colorHex;
+          hexValue.style.fontSize = '0.7em'; // Smaller font size for hex value
+
+          container.appendChild(square);
+          container.appendChild(label);
+          container.appendChild(hexValue);
+          paletteContainer.appendChild(container);
         });
       }
 
