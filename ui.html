@@ -9,19 +9,29 @@
         width: 300px;
         margin-bottom: 20px;
       }
-      .preview {
-        width: 100%;
+      .palette {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+      }
+      .color-square {
+        width: 50px;
         height: 50px;
-        border: 1px solid #ccc;
-        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        text-align: center;
+        color: #fff;
       }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
   </head>
   <body>
+    <div class="palette" id="colorPalette"></div>
     <div class="color-picker" id="colorPicker"></div>
-    <!-- <div class="preview" id="colorPreview"></div> -->
 
     <script>
       const pickr = Pickr.create({
@@ -39,10 +49,34 @@
         }
       });
 
+      // Function to update color palette
+      function updatePalette(palette) {
+        const paletteContainer = document.getElementById('colorPalette');
+        paletteContainer.innerHTML = '';
+        palette.forEach((colorHex) => {
+          const square = document.createElement('div');
+          square.className = 'color-square';
+          square.style.backgroundColor = colorHex;
+          square.innerHTML = `<span>${colorHex}</span>`;
+          paletteContainer.appendChild(square);
+        });
+      }
+
+        // Initialize the palette with a default palette
+      const defaultPalette = Array(11).fill('#cccccc'); // Placeholder colors
+      updatePalette(defaultPalette);
+
       pickr.on('change', (color) => {
-        const rgba_arr = color.toRGBA(); // Get color as Hex
-        const rgba = {r: rgba_arr[0], g: rgba_arr[1], b: rgba_arr[2], a: rgba_arr[3]}
+        const rgbaArr = color.toRGBA();
+        const rgba = { r: rgbaArr[0], g: rgbaArr[1], b: rgbaArr[2], a: rgbaArr[3] };
         parent.postMessage({ pluginMessage: { type: 'apply-color', color: rgba } }, '*');
+      });
+
+      window.addEventListener('message', (event) => {
+        const pluginMessage = event.data.pluginMessage;
+        if (pluginMessage.type === 'update-palette') {
+          updatePalette(pluginMessage.palette);
+        }
       });
     </script>
   </body>

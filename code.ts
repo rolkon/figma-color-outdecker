@@ -74,7 +74,7 @@ function generateColorPalette(baseColor: { r: number; g: number; b: number; a: n
 figma.showUI(__html__);
 
 // Set initial window size
-figma.ui.resize(320, 400); // Width: 320px, Height: 400px
+figma.ui.resize(640, 480); // Width: 320px, Height: 400px
 
 // Calls to "parent.postMessage" from within the HTML page will trigger this
 // callback. The callback will be passed the "pluginMessage" property of the
@@ -84,7 +84,9 @@ figma.ui.onmessage = async (msg: {type: string, color?: {r: number, g: number, b
 
     const palette = generateColorPalette(msg.color);
 
-    console.log(palette);
+    // console.log(palette);
+
+    figma.ui.postMessage({type: 'update-palette', palette});
 
     // Convert HSL to RGB (Figma uses RGB)
     // const r = msg.color.r / 255;
