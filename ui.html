@@ -59,19 +59,21 @@
         <span id="lightnessValue">50%</span>
       </div>
     </div>
-    <button id="apply">Apply Color</button>
-    <button id="cancel">Cancel</button>
 
     <script>
       let h = 0, s = 50, l = 50;
-      
+
       function updatePreview() {
         const previewColor = `hsl(${h}, ${s}%, ${l}%)`;
         document.getElementById('colorPreview').style.backgroundColor = previewColor;
-        
-        // Update the saturation and lightness slider gradients
-        const pureHue = `hsl(${h}, 100%, 50%)`;
-        document.documentElement.style.setProperty('--hue-color', pureHue);
+
+        // Send the updated color to the plugin
+        parent.postMessage({
+          pluginMessage: {
+            type: 'apply-color',
+            color: { h, s, l }
+          }
+        }, '*');
       }
 
       document.getElementById('hue').oninput = (e) => {
@@ -90,19 +92,6 @@
         l = parseInt(e.target.value);
         document.getElementById('lightnessValue').textContent = l + '%';
         updatePreview();
-      };
-
-      document.getElementById('apply').onclick = () => {
-        parent.postMessage({ 
-          pluginMessage: { 
-            type: 'apply-color',
-            color: { h, s, l }
-          }
-        }, '*');
-      };
-
-      document.getElementById('cancel').onclick = () => {
-        parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
       };
 
       // Initialize the preview and gradients
