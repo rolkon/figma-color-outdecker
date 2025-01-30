@@ -80,7 +80,7 @@ function generateColorPalette(baseColor: { r: number; g: number; b: number; a: n
 
   // Append the input color as the last element
   const inputColorHex = rgbToHex(r, g, b);
-  // palette.push(inputColorHex);
+  palette.push(inputColorHex);
 
   return palette;
 }
@@ -109,7 +109,6 @@ async function createOrUpdateColorVariable(
   let variable = variables.find(v => v.name === name && v.variableCollectionId === collection.id);
 
   if (!variable) {
-    console.log(name, collection.id);
     variable = figma.variables.createVariable(name, collection, "COLOR");
   }
 
@@ -131,8 +130,6 @@ figma.ui.onmessage = async (msg: {type: string, colors?: {r: number, g: number, 
   if (msg.type === 'apply-colors' && msg.colors) {
     const palettes = msg.colors.map(generateColorPalette);
 
-    console.log(palettes);
-
     try {
       const collection = await ensureVariableCollectionExists("Outdecker Primitives");
 
@@ -140,25 +137,19 @@ figma.ui.onmessage = async (msg: {type: string, colors?: {r: number, g: number, 
 
       const tailwindLabels = ["50", "100", "200", "300",
                               "400", "500", "600", "700",
-                              "800", "900", "950"];
-
-      
-      colorTypes.forEach((type, index) => {
-        
-      });
+                              "800", "900", "950", "Original"];
 
       for (const [typeIdx, type] of colorTypes.entries()) {
         for (const [colorIdx, colorHex] of palettes[typeIdx].entries()) {
           const colorRgb = hexToRgb(colorHex); // Convert hex to RGB
           if (colorRgb) {
             const label = [type, "/", tailwindLabels[colorIdx]].join("");
-            console.log(label);
             await createOrUpdateColorVariable(collection, label, colorRgb); // Use await in an async context
           }
         }
       }
 
-      figma.notify("Color palette applied to variables.");
+      // figma.notify("Color palette applied to variables.");
     } catch (error: unknown) {
       if(error instanceof Error) {
         figma.notify("Error managing color variables: " + error.message);
